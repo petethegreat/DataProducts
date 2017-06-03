@@ -113,7 +113,7 @@ def DoStuff():
     ''' pull info from yelp '''
     
     # restaurant categories to search for
-    categories = ['chinese','french','burgers','mexican','mideastern','sushi','italian','steak','sushi']
+    categories = ['chinese','french','burgers','mexican','mideastern','sushi','italian','steak','sushi','indpak']
     
     # how many results to fetch with each api call
     thelim = 50
