@@ -1,5 +1,6 @@
 ---
 title: "Toronto Restaurant Locations"
+author: Peter Thompson
 output:
   html_document:
     mathjax: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
@@ -16,8 +17,9 @@ data[1:2,]
 dim(data)
 ```
 
-Make a map!
-rating info uses Yelp-brand stars, as specified by their [display requirements](https://www.yelp.ca/developers/display_requirements)
+## Map
+
+rating info uses Yelp-brand stars, as specified by their [display requirements](https://www.yelp.ca/developers/display_requirements). 
 
 
 ```{r makemap,warning=FALSE,fig.width=7,fig.height=7,dpi=108}
@@ -61,6 +63,4 @@ map
 ```
 
 <img src='assets/Yelp_trademark_RGB.png' width=200px>
-<!-- ![Yelp!](assets/Yelp_trademark_RGB.png)
- -->
 
