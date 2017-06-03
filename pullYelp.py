@@ -156,10 +156,10 @@ def DoStuff():
         
             # loop over entries in the response
             for business in responsedict['businesses']:
-                yid.append(business['id'])
+                yid.append(business['id'].encode('utf-8'))
                 lat.append(business['coordinates']['latitude'])
                 lng.append(business['coordinates']['longitude'])
-                name.append(business['name'])
+                name.append(business['name'].encode('utf-8'))
                 rating.append(business['rating'])
                 reviews.append(business['review_count'])
                 thecat.append(cat)
@@ -181,7 +181,8 @@ def DoStuff():
             if Masterdf is None:
                 Masterdf = thisdf
             else:
-                Masterdf.append(thisdf,ignore_index=True)
+                Masterdf = Masterdf.append(thisdf)
+            # print(Masterdf.shape)
     # write Masterdf to file
     Masterdf.to_csv('yelpData.csv',na_rep='NA')
 

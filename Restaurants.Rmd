@@ -21,7 +21,7 @@ Make a map!
 library(leaflet)
 
 data$category <- as.factor(data$category)
-map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% addCircleMarkers(color=~category)#,fillOpacity=~rating/5.0)
+map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% addCircleMarkers(color=~category,fillOpacity=~rating/5.0)
 map
 
 ```
