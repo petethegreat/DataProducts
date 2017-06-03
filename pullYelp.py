@@ -10,7 +10,7 @@ from urllib import urlencode
 from urllib import quote
 
 
-
+import pandas as pd
 # https://github.com/joestump/python-oauth2
 
 
@@ -22,6 +22,8 @@ TOKENCACHE = 'tokenCache.txt'
 
 
 def GetCredentials():
+    # credential info is stored in a text file.
+    # this can be obtained by signing into yelp and registering an app
     fname = CREDENTIALS
     lines = None
     try:
@@ -85,65 +87,104 @@ def GetToken():
 
 
 def pullFromYelp(payload,token):
+    ''' Fetch restaurant information via yelp api '''
+    # api search url
     searchurl = '{root}v3/businesses/search'.format(root=API_ROOT)
+
+    # request headers - need authoriztion token in here
     headers = {'user-agent':'Pete\'s python script','Authorization':'Bearer {tk}'.format(tk=token)}
     
+    # send get request with payload info
     q = requests.get(searchurl,headers=headers,params=payload)
     
+    # check reponse
     if q.status_code != requests.codes.ok:
-        print('Error, bad authentication request')
+        print('Error, bad statuscode request')
         print(q.url)
         print(q.status_code)
         print(q.text)
         sys.exit()
+    # parse json, return dictionary of results
     responsedict = q.json()
     return responsedict
     
 
 def DoStuff():
+    ''' pull info from yelp '''
     
+    # restaurant categories to search for
+    categories = ['chinese','french','burgers','mexican','mideastern','sushi','italian','steak','sushi']
     
-    token = GetToken()
-    
-    # Have a token, now search yelp
-    searchurl = '{root}v3/businesses/search'.format(root=API_ROOT)
-    
-    # categories = ['asianfusion','burgers','barbecue','brasseries','caribbean','chinese',
-#     'comfortfood','fishnchips','french','indpak','italian','japanese','korean','kebab',
-#     'mediterranean','mexican','noodles','steak','sushi','thai']
-    
-    cslim = ['chinese','french','burgers','mexican','mideastern','sushi','italian','steak','sushi']
-    
+    # how many results to fetch with each api call
     thelim = 50
-    hardmax = 1000
-    # payload = {'location':'Toronto, On, Ca','sort_by':'rating','limit':thelim,'offset':0}
+
+    # info to send in api query. 
     payload = {'location':'Toronto, On, Ca','limit':thelim,'offset':0}
     
+    # will store fetched results for each call in a dataframe. 
+    # will store all results in a masterdf
     Masterdf = None
-    for cat in cslim:
+
+    # get the auth token
+    token = GetToken()
+
+    # loop over categories
+    for cat in categories:
+        # configure request
+        # each call can retrieve at most 50 records
+        # use offset to retrieve subsequent records (up to 1000)
         payload['offset'] = 0
         payload['categories'] = {'{ct}'.format(ct=cat)}
         
-        responsedict = pullFromYelp(payload,token):
+        # number of entries in this category that have been read
+        read =0
+        # total number of entries in this category
+        total=1
+        while read < min(total,1000):
+            payload['offset'] = read
+            responsedict = pullFromYelp(payload,token)
+            total = responsedict['total']
         
-        yid = []
-        lat = []
-        lng = []
-        name = []
-        rating = []
-        reviews = []
-        thecat = []
+            # lists to store info in
+            yid = []
+            lat = []
+            lng = []
+            name = []
+            rating = []
+            reviews = []
+            thecat = []
         
-        
-        total = responsedict['total']
-        print ('found total of {t} restaurants that match {cat}'.format(t=total,cat=cat))
-        for business in responsedict['businesses']:
-            yid.append(business['id'])
-            lat.append(business['coordinates']['lattitude'])
-            lng.append(business['coordinates']['longitude'])
-            name.append(business['name'])
-            rating.append(business['rating'])
-        print('\n')
+            # loop over entries in the response
+            for business in responsedict['businesses']:
+                yid.append(business['id'])
+                lat.append(business['coordinates']['latitude'])
+                lng.append(business['coordinates']['longitude'])
+                name.append(business['name'])
+                rating.append(business['rating'])
+                reviews.append(business['review_count'])
+                thecat.append(cat)
+            read += len(yid)
+            print ('read {rd} of {t} {cat} restaurants'.format(t=total,cat=cat,rd=read))
+
+            # construct dataframe from lists
+            thisdf = pd.DataFrame({
+                'yelpid':yid,
+                'lat':lat,
+                'lng':lng,
+                'name':name,
+                'rating':rating,
+                'reviews':reviews,
+                'category':thecat
+                })
+
+            # append thisdf to Masterdf
+            if Masterdf is None:
+                Masterdf = thisdf
+            else:
+                Masterdf.append(thisdf,ignore_index=True)
+    # write Masterdf to file
+    Masterdf.to_csv('yelpData.csv',na_rep='NA')
+
   
 def main():
 

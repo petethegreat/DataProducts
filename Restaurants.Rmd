@@ -1,0 +1,28 @@
+---
+title: "Toronto Restaurant Locations"
+output:
+  html_document:
+    mathjax: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+---
+
+## Restaurant Info
+Restaurant information is pulled from [yelp](www.yelp.ca) using the fusion [api](https://www.yelp.ca/developers/documentation/v3)
+
+Dealing with the Oauth authorisation used by yelp isn't straightforward in R, so I used a python script to do this. Info is saved in a csv, which is then loaded into R
+
+```{r loaddata}
+data<-read.csv('yelpData.csv')
+head(data)
+```
+
+Make a map!
+```{r makemap}
+library(leaflet)
+
+data$category <- as.factor(data$category)
+map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% addCircleMarkers(color=~category,fillOpacity=~rating/5.0)
+map
+
+```
+
+
