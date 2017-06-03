@@ -13,6 +13,7 @@ Dealing with the Oauth authorisation used by yelp isn't straightforward in R, so
 ```{r loaddata}
 data<-read.csv('yelpData.csv')
 head(data)
+dim(data)
 ```
 
 Make a map!
@@ -20,7 +21,7 @@ Make a map!
 library(leaflet)
 
 data$category <- as.factor(data$category)
-map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% addCircleMarkers(color=~category,fillOpacity=~rating/5.0)
+map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% addCircleMarkers(color=~category)#,fillOpacity=~rating/5.0)
 map
 
 ```
