@@ -17,13 +17,22 @@ dim(data)
 ```
 
 Make a map!
-```{r makemap}
+
+```{r makemap,warning=FALSE}
 library(leaflet)
-
+library(RColorBrewer)
+library(htmltools)
+pal<-colorFactor('Set1',domain=levels(data$category))
 data$category <- as.factor(data$category)
-map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% addCircleMarkers(color=~category,fillOpacity=~rating/5.0)
+data$colours <- data$category
+map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% 
+    addCircleMarkers(color=~pal(category),
+    stroke=FALSE,
+    fillOpacity=~rating/5.0,
+    # clusterOptions=markerClusterOptions(),
+    label=~htmlEscape(name)
+    )
 map
-
 ```
 
 
