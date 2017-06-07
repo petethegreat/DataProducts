@@ -1,0 +1,25 @@
+---
+title: "IMDB movie ratings by genre"
+author: Peter Thompson
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+---
+## Introduction
+
+some plotly plots of imdb data, downloaded from [http://www.imdb.com/interfaces](http://www.imdb.com/interfaces)
+
+## load data
+interested in movie ratings, year, and genres. dealing with genres will be tricky, as a single movie may belong to multiple genres. Data also comes from multiple files, so will need to identify things by title and year. dplyr and tidyr (melt/cast) might be handy. Thinking a logical for each genre (is in/ not in). 
+
+scatter plot ratings by year, faceted by genre
+scatter plot ratings by year, coloured by genre
+line plot mean rating per year (with quantiles) per genre (are horror movies improving?/are romances getting worst)
+How many movies per genre are produced each year?
+
+
+
+
+
+
+
