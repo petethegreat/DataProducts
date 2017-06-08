@@ -1,33 +1,13 @@
----
-title: "Toronto Restaurant Locations"
-author: Peter Thompson
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output:
-  html_document:
-    mathjax: "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
----
 
-## Restaurant Info
-Restaurant information is pulled from [yelp](www.yelp.ca) using the fusion [api](https://www.yelp.ca/developers/documentation/v3)
-
-Dealing with the Oauth authorisation used by yelp isn't straightforward in R, so I used a python script to do this. Info is saved in a csv, which is then loaded into R
-
-```{r loaddata}
-data<-read.csv('yelpData.csv')
-data[1:2,]
-dim(data)
-```
-
-## Map
-
-rating info uses Yelp-brand stars, as specified by their [display requirements](https://www.yelp.ca/developers/display_requirements). 
-
-
-```{r makemap,warning=FALSE,fig.width=7,fig.height=7,dpi=108}
-# load libraries
+# MakeMap.R
 library(leaflet)
 library(RColorBrewer)
 library(htmltools)
+library(htmlwidgets)
+data<-read.csv('yelpData.csv')
+data[1:2,]
+# dim(data)
+
 # set up marker colours
 pal<-colorFactor('Set1',domain=levels(data$category))
 # define a function to get the stars image based on rating
@@ -50,18 +30,23 @@ data$starsimage[data$rating >= 4.95] <- '<img src="assets/small_5.png">'
 data$content<-paste(sep='<br/>',paste(sep='','<a href="https://www.yelp.ca/biz/',data$yelpid,'">',data$name,'</a>'),data$starsimage,data$rating,paste(data$reviews,'reviews'))
 
 data$category <- as.factor(data$category)
-map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>% addTiles() %>% 
-    addCircleMarkers(color=~pal(category),
-    stroke=FALSE,
-    fillOpacity=~rating/5.0,
-    # clusterOptions=markerClusterOptions(),
-    label=~name, #htmlEscape(name)
-    popup=~content,
-    popupOptions=popupOptions(minwidth=250)	
-    ) %>%
-    addLegend("topright",pal=pal,values=levels(data$category))
-map
-```
 
-<img src='assets/Yelp_trademark_RGB.png' width=200px>
+streetprovider<-providers$CartoDB.PositronNoLabels
+labelprovider<-providers$CartoDB.PositronOnlyLabels
+# providers$Stamen.TonerLabels
+map<- leaflet(data=data) %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>%
+  #addTiles() %>% 
+  addProviderTiles(streetprovider,
+                   options = providerTileOptions(opacity = 0.45)) %>%
+  addProviderTiles(labelprovider) %>%
+  addCircleMarkers(color=~pal(category),
+                   stroke=FALSE,
+                   fillOpacity=~rating/5.0,
+                   # clusterOptions=markerClusterOptions(),
+                   label=~name, #htmlEscape(name)
+                   popup=~content,
+                   popupOptions=popupOptions(minWidth=100)	
+  ) %>%
+  addLegend("topright",pal=pal,values=levels(data$category))
 
+saveWidget(map, file="newmap.html")
