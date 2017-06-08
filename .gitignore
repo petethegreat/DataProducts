@@ -1,4 +1,7 @@
 yelpCredentials.txt
 tokenCache.txt
 movies
-newmap.R newmap.html
+newmap.R
+newmap.html
+makeMap.R
+

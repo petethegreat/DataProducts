@@ -17,7 +17,7 @@ scatter plot ratings by year, coloured by genre
 line plot mean rating per year (with quantiles) per genre (are horror movies improving?/are romances getting worst)
 How many movies per genre are produced each year?
 
-
+Might need to tweak the read.csv, or use read.table instead. There are a bunch of lines that should be omitted in one of the files. Check whitespace, columns might be tabbed or fixed width
 
 
 
