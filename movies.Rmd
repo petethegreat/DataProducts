@@ -19,6 +19,64 @@ How many movies per genre are produced each year?
 
 Might need to tweak the read.csv, or use read.table instead. There are a bunch of lines that should be omitted in one of the files. Check whitespace, columns might be tabbed or fixed width
 
+```{r genres,cache=TRUE}
+lines<-readLines('movies/genres.list')
+lines<-lines[384:length(lines)]
+
+# remove entries containing curly braces {} - often these are duplicates or movies that were suspended during/before production
+Sys.setlocale('LC_ALL','C') 
+badlines<-grepl('\\{.*\\}',lines)
+lines<-lines[!badlines]
+
+#pull out the titles:
+titles<-gsub('"([^"]+)".*','\\1',lines)
+# years<-gsub('^.*\\(([0-9]+)\\).*','\\1',lines)
+years<-gsub('^.*\\((.+)\\).*','\\1',lines)
+years2<-gsub('([0-9]{4,4})/?[A-Z]*','\\1',years)
+genres<-gsub('^.*?[ \t]+([A-Za-z-]+)$','\\1',lines)
+# get a warning here because the coercion of year to numeric introduces some NAs
+# this is ok (good), as there are a lot of '????' type values for year, in which case NA is appropriate
+
+# We could use tidyr to gather this, creating a factor for each genre type.  
+# don't neccasrily need to, right now data is in "long" format
+
+genredf<-data.frame(title=titles,year=as.integer(years2),genre=as.factor(genres))
+```
+load ratings
+
+```{r ratings,cache=TRUE}
+Sys.setlocale('LC_ALL','C')
+lines<-readLines('movies/ratings.list')
+lines<-lines[297:738802]
+
+# remove entries containing curly braces {} - often these are duplicates or movies that were suspended during/before production
+# or tv shows - not interested
+badlines<-grepl('\\{.*\\}',lines)
+lines<-lines[!badlines]
+badlines<-grepl('(T?V)',lines)
+lines<-lines[!badlines]
+# These regex are not perfect, the formatting of the list file is not ideal (some titles are single quoted, some are double quoted, others are not quoted at all.) 
+# going to discard things that don't match here. That's quote a lot of the data, but I don't want to spend any more time on messing with regex in R.
+
+titles<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\3',lines)
+years<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\4',lines)
+years2<-gsub('([0-9]{4,4})/?[A-Z]*','\\1',years)
+votes<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\1',lines)
+rating<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\2',lines)
+
+check<-as.integer(years2)
+badmatch<-is.na(check)
+titles<-titles[!badmatch]
+years2<-years2[!badmatch]
+rating<-rating[!badmatch]
+votes<-votes[!badmatch]
+
+ratingdf<-data.frame(title=titles,year=as.integer(years2),votes=as.integer(votes),rating=as.numeric(rating))
+```
+
+Do stuff.
+A couple plots. 
+
 
 
 
