@@ -1,23 +1,16 @@
 ---
-title: "IMDB movie ratings by genre"
+title: "IMDB Movie Genres"
 author: Peter Thompson
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document
+  ioslides_presentation
 ---
 ## Introduction
 
-some plotly plots of imdb data, downloaded from [http://www.imdb.com/interfaces](http://www.imdb.com/interfaces)
+This presentation contains some plots of movie data taken from the [IMDB](http://www.imdb.com/interfaces). Plots are generated using plotly
 
-## load data
-interested in movie ratings, year, and genres. dealing with genres will be tricky, as a single movie may belong to multiple genres. Data also comes from multiple files, so will need to identify things by title and year. dplyr and tidyr (melt/cast) might be handy. Thinking a logical for each genre (is in/ not in). 
-
-scatter plot ratings by year, faceted by genre
-scatter plot ratings by year, coloured by genre
-line plot mean rating per year (with quantiles) per genre (are horror movies improving?/are romances getting worst)
-How many movies per genre are produced each year?
-
-Might need to tweak the read.csv, or use read.table instead. There are a bunch of lines that should be omitted in one of the files. Check whitespace, columns might be tabbed or fixed width
+## libraries
+The dplyr and plotly packages are used here
 
 ```{r libraries,warning=FALSE,message=FALSE}
 library(dplyr)
@@ -25,54 +18,56 @@ library(plotly)
 ```
 
 
-```{r genres,cache=TRUE}
+## Load Genre Data
+Will load the genre information. The genres.list file is a text file. A bunch of lines at the beginning should be skipped. The information is also not in a standard table format, so will read the lines individually, parse/clean them using regex (gsub), and then merge the columns into a dataframe.
+
+
+## Load Genre Data
+```{r genres,cache=TRUE,results='hide',warning=FALSE}
 lines<-readLines('movies/genres.list')
 lines<-lines[384:length(lines)]
-
-# remove entries containing curly braces {} - often these are duplicates or movies that were suspended during/before production
-# setlocale is needed to deal with some non-english characters
 Sys.setlocale('LC_ALL','C') 
+# remove entries containing curly braces {} - often these are duplicates or movies that were suspended during/before production
 badlines<-grepl('\\{.*\\}',lines)
 lines<-lines[!badlines]
-
-#pull out the titles:
 titles<-gsub('"([^"]+)".*','\\1',lines)
-# years<-gsub('^.*\\(([0-9]+)\\).*','\\1',lines)
 years<-gsub('^.*\\((.+)\\).*','\\1',lines)
 years2<-gsub('([0-9]{4,4})/?[A-Z]*','\\1',years)
 genres<-gsub('^.*?[ \t]+([A-Za-z-]+)$','\\1',lines)
-# get a warning here because the coercion of year to numeric introduces some NAs
-# this is ok (good), as there are a lot of '????' type values for year, in which case NA is appropriate
-
-# We could use tidyr to gather this, creating a factor for each genre type.  
-# don't neccasrily need to, right now data is in "long" format
-
+# get a warning here because the coercion of year to numeric introduces some NAs (this is ok)
 genredf<-data.frame(title=titles,year=as.integer(years2),genre=as.factor(genres))
 ```
+
+## Genres
 It might also be interesting to look into ratings information, but the formatting of the ratings.list file makes it difficult to deal with (in R at least).
 
 Instead, will just look at the top 20 genres (i.e., those containing the most movies) over all time
 
 ```{r top20,cache=TRUE}
 top20<-sort(table(genredf$genre),decreasing=TRUE)[1:20]
-top20
+#top20
 t20list<-names(top20)
 slimmed<- genredf %>% filter(genre %in% t20list)
 ```
 
 ## Plotly Plots
 
-Bar chart showing the top 20 movie genres
+Some plots are shown on the next few slides. First a bar chart showing the the number of movies (over all time) belonging to the top 20 genres, and then a scatter plot showing movie numbers per genre vs year.
 
-```{r barchart,cache=TRUE,dependson=top20,fig.width=7,fig.height=7,dpi=108,warning=FALSE}
+The code to produce these plots is suppressed here (`echo=FALSE` in the chunk options), because it takes up a lot of space in the presentation slides. The Rmd file can be viewed [here](https://github.com/petethegreat/DataProducts/blob/master/movies.Rmd)
+
+
+## Top 20 Genres
+
+```{r barchart,cache=TRUE,dependson=top20,warning=FALSE,echo=FALSE}
 # bar chart
 plot_ly(x=top20,y=names(top20),type='bar',orientation='h',color=~top20)
 
 ```
 
-Scatter plot showing number of movies produced each year, by genre.
+## Genres By Year
 
-```{r plotstuff,dependson='top20',fig.width=7,fig.height=7,dpi=108,warning=FALSE}
+```{r plotstuff,dependson='top20',warning=FALSE,cache=TRUE,echo=FALSE}
 # plot genres by year
 moose2<-slimmed %>% group_by(year,genre) %>% summarize(count=n()) %>% arrange(genre,year)
 # head(moose2)
@@ -89,7 +84,10 @@ plot_ly(data=moose2,
         yaxis=list(type='log'))
 ```
 
-Not sure why the lines (`mode='markers+lines'`) aren't showing up. Genres tend to follow the same trend. During the 80's and 90's there were more Action movies produced than Romances (beacuse action movies were [awesome](http://www.imdb.com/title/tt0103064/) [then](http://www.imdb.com/title/tt0112864/).
+## Notes 
+Short movies dominate the movie listings. As these are shorter they probably take much less time and money to produce. Dramas, comedies, and documentaries are also popular.
+
+Not sure why the lines (`mode='markers+lines'`) aren't showing up. Genres tend to follow the same trend. During the 80's and 90's there were more Action movies produced than Romances (because action movies were [awesome](http://www.imdb.com/title/tt0103064/) [then](http://www.imdb.com/title/tt0112864/).
 
 
 
