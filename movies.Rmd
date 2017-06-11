@@ -3,7 +3,7 @@ title: "IMDB movie ratings by genre"
 author: Peter Thompson
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document:
+  html_document
 ---
 ## Introduction
 
@@ -19,11 +19,18 @@ How many movies per genre are produced each year?
 
 Might need to tweak the read.csv, or use read.table instead. There are a bunch of lines that should be omitted in one of the files. Check whitespace, columns might be tabbed or fixed width
 
+```{r libraries,warning=FALSE,message=FALSE}
+library(dplyr)
+library(plotly)
+```
+
+
 ```{r genres,cache=TRUE}
 lines<-readLines('movies/genres.list')
 lines<-lines[384:length(lines)]
 
 # remove entries containing curly braces {} - often these are duplicates or movies that were suspended during/before production
+# setlocale is needed to deal with some non-english characters
 Sys.setlocale('LC_ALL','C') 
 badlines<-grepl('\\{.*\\}',lines)
 lines<-lines[!badlines]
@@ -42,42 +49,47 @@ genres<-gsub('^.*?[ \t]+([A-Za-z-]+)$','\\1',lines)
 
 genredf<-data.frame(title=titles,year=as.integer(years2),genre=as.factor(genres))
 ```
-load ratings
+It might also be interesting to look into ratings information, but the formatting of the ratings.list file makes it difficult to deal with (in R at least).
 
-```{r ratings,cache=TRUE}
-Sys.setlocale('LC_ALL','C')
-lines<-readLines('movies/ratings.list')
-lines<-lines[297:738802]
+Instead, will just look at the top 20 genres (i.e., those containing the most movies) over all time
 
-# remove entries containing curly braces {} - often these are duplicates or movies that were suspended during/before production
-# or tv shows - not interested
-badlines<-grepl('\\{.*\\}',lines)
-lines<-lines[!badlines]
-badlines<-grepl('(T?V)',lines)
-lines<-lines[!badlines]
-# These regex are not perfect, the formatting of the list file is not ideal (some titles are single quoted, some are double quoted, others are not quoted at all.) 
-# going to discard things that don't match here. That's quote a lot of the data, but I don't want to spend any more time on messing with regex in R.
-
-titles<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\3',lines)
-years<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\4',lines)
-years2<-gsub('([0-9]{4,4})/?[A-Z]*','\\1',years)
-votes<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\1',lines)
-rating<-gsub('^.{6,6}[0-9\\.\\*]{10,10}[ \t]+([0-9]+)[ \t]+([0-9\\.]+)[ \t]+"([^"]+)"[ \t]+\\((.+)\\)','\\2',lines)
-
-check<-as.integer(years2)
-badmatch<-is.na(check)
-titles<-titles[!badmatch]
-years2<-years2[!badmatch]
-rating<-rating[!badmatch]
-votes<-votes[!badmatch]
-
-ratingdf<-data.frame(title=titles,year=as.integer(years2),votes=as.integer(votes),rating=as.numeric(rating))
+```{r top20,cache=TRUE}
+top20<-sort(table(genredf$genre),decreasing=TRUE)[1:20]
+top20
+t20list<-names(top20)
+slimmed<- genredf %>% filter(genre %in% t20list)
 ```
 
-Do stuff.
-A couple plots. 
+## Plotly Plots
 
+Bar chart showing the top 20 movie genres
 
+```{r barchart,cache=TRUE,dependson=top20,fig.width=7,fig.height=7,dpi=108,warning=FALSE}
+# bar chart
+plot_ly(x=top20,y=names(top20),type='bar',orientation='h',color=~top20)
+
+```
+
+Scatter plot showing number of movies produced each year, by genre.
+
+```{r plotstuff,dependson='top20',fig.width=7,fig.height=7,dpi=108,warning=FALSE}
+# plot genres by year
+moose2<-slimmed %>% group_by(year,genre) %>% summarize(count=n()) %>% arrange(genre,year)
+# head(moose2)
+plot_ly(data=moose2,
+    x=~year,
+    y=~count,
+    type='scatter',
+    mode='markers+lines',
+    color=~genre,
+    line=list(width=1)
+    ) %>% 
+    layout(
+        xaxis=list(title='year of movie',range=c(1900,2020)),
+        yaxis=list(type='log'))
+```
+
+Not sure why the lines (`mode='markers+lines'`) aren't showing up. Genres tend to follow the same trend. During the 80's and 90's there were more Action movies produced than Romances (beacuse action movies were [awesome](http://www.imdb.com/title/tt0103064/) [then](http://www.imdb.com/title/tt0112864/).
 
 
 
