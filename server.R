@@ -1,14 +1,20 @@
 library(shiny)
 library(leaflet)
+
+# makeMap
+# this function loads restaurant information from a csv file into a dataframe
+# The dataframe is then sliced by restaurant category
+# A leaflet map of Toronto is generated, and restaurant markers are added to it
+# each category is assigned a seperate group, so that they may be toggled later
 makeMap<-function()
 {
   # load the data 
   data<-read.csv('yelpData.csv')
-  # set up marker/popup content
+  # set up color pallette
   pal<-colorFactor('Set1',domain=levels(data$category))
-  # define a function to get the stars image based on rating
-  # get stars image based on rating
-  # looks like ratings are in multiples of 0.5, could probably simplify this
+  
+  # map the rating to a Yelp stars image
+  # ratings are in increments of 0.5, so we could simplify this
   data$starsimage=""
   data$starsimage[data$rating < 1.0] <- '<img src="assets/small_0.png">'
   data$starsimage[data$rating >= 1.0 & data$rating < 1.5] <- '<img src="assets/small_1.png">'
@@ -45,6 +51,8 @@ makeMap<-function()
   catlist<-lapply(categories,function(x) { data[data$category==x,]})
   names(catlist)<-categories
   
+  # provider tiles. These will give a black and white (grayish) map
+  # so coloured markers will stand out
   streetprovider<-providers$CartoDB.PositronNoLabels
   labelprovider<-providers$CartoDB.PositronOnlyLabels
   # providers$Stamen.TonerLabels
@@ -52,6 +60,7 @@ makeMap<-function()
     addProviderTiles(streetprovider,
                      options = providerTileOptions(opacity = 0.45)) %>%
     addProviderTiles(labelprovider)
+  # add all the markers/popups
   for (cat in categories)
   {
     map<-map %>% addCircleMarkers(
@@ -66,28 +75,30 @@ makeMap<-function()
       popupOptions=popupOptions(minWidth=100)
       )
   }
-  
+  # add legend to map
   map<-map %>% addLegend("topright",pal=pal,values=levels(data$category))
+  # return a list containing the category names and the map
   thelist<-list(map,categories)
   return(thelist)
   
 }
 
-#output$categories <- categories
-#output$colours<-colours
-# draw the legend in the sidebar
-# implement the toggles/reactivity/proxy
-
-
+# server function
 shinyServer(
   function(input,output,session)
   {
+    # get the map and categories
     maplist<-makeMap()
     map<-maplist[[1]]
     catlist<-maplist[[2]]
+    # draw the map
     output$map<-renderLeaflet(map)
-    #output$catlist<-catlist
     
+    # Category Observers
+    # These are reflexive. They look for ui interaction
+    # The observer/proxy stuff means that the entire map is not redrawn when a checkbox is clicked
+    
+    # burgers
     observe(
       {
         proxy <- leafletProxy("map")
@@ -99,8 +110,112 @@ shinyServer(
         {
           proxy %>% hideGroup('burgers')
         }
-        
-      }
-    )
+      })
+    # chinese 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$chinese)
+        {
+          proxy %>% showGroup('chinese')
+        }
+        else 
+        {
+          proxy %>% hideGroup('chinese')
+        }
+      })
+    # french 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$french)
+        {
+          proxy %>% showGroup('french')
+        }
+        else 
+        {
+          proxy %>% hideGroup('french')
+        }
+      })
+    # indpak 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$indpak)
+        {
+          proxy %>% showGroup('indpak')
+        }
+        else 
+        {
+          proxy %>% hideGroup('indpak')
+        }
+      })
+    # italian 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$italian)
+        {
+          proxy %>% showGroup('italian')
+        }
+        else 
+        {
+          proxy %>% hideGroup('italian')
+        }
+      })
+    # mexican 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$mexican)
+        {
+          proxy %>% showGroup('mexican')
+        }
+        else 
+        {
+          proxy %>% hideGroup('mexican')
+        }
+      })
+    # mideastern 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$mideastern)
+        {
+          proxy %>% showGroup('mideastern')
+        }
+        else 
+        {
+          proxy %>% hideGroup('mideastern')
+        }
+      })
+    # steak 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$steak)
+        {
+          proxy %>% showGroup('steak')
+        }
+        else 
+        {
+          proxy %>% hideGroup('steak')
+        }
+      })
+    # sushi 
+    observe(
+      {
+        proxy <- leafletProxy("map")
+        if(input$sushi)
+        {
+          proxy %>% showGroup('sushi')
+        }
+        else 
+        {
+          proxy %>% hideGroup('sushi')
+        }
+      })
+    
+    
   }
 )
