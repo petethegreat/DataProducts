@@ -3,9 +3,10 @@ library(leaflet)
 
 shinyUI(
   fluidPage(
-    titlePanel("Toronto Restaurants"),
+    titlePanel('RestoMapp'),
     sidebarLayout(
       sidebarPanel(
+        h3("Toronto Restaurants"),
         tabsetPanel
         (
           tabPanel("Controls",
