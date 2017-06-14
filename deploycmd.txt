@@ -1,0 +1,2 @@
+rsconnect::deployApp(appFileManifest='ShinyAppManifest.txt',appName='RestoMapp',appTitle='RestoMapp: Interactive Map of Toronto Restaurants',contentCategory='application')
+
