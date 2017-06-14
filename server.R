@@ -15,15 +15,15 @@ makeMap<-function()
   # map the rating to a Yelp stars image
   # ratings are in increments of 0.5, so we could simplify this
   data$starsimage=""
-  data$starsimage[data$rating < 1.0] <- '<img src="assets/small_0.png">'
-  data$starsimage[data$rating >= 1.0 & data$rating < 1.5] <- '<img src="assets/small_1.png">'
-  data$starsimage[data$rating >= 1.5 & data$rating < 2.0] <- '<img src="assets/small_1_half.png">'
-  data$starsimage[data$rating >= 2.0 & data$rating < 2.5] <- '<img src="assets/small_2.png">'
-  data$starsimage[data$rating >= 2.5 & data$rating < 3.0] <- '<img src="assets/small_2_half.png">'
-  data$starsimage[data$rating >= 3.0 & data$rating < 3.5] <- '<img src="assets/small_3.png">'
-  data$starsimage[data$rating >= 3.5 & data$rating < 4.0] <- '<img src="assets/small_3_half.png">'
-  data$starsimage[data$rating >= 4.0 & data$rating < 4.5] <- '<img src="assets/small_4.png">'
-  data$starsimage[data$rating >= 4.5 & data$rating < 4.95] <- '<img src="assets/small_4_half.png">'
+  data$starsimage[data$rating < 1.0] <- '<img src="small_0.png">'
+  data$starsimage[data$rating >= 1.0 & data$rating < 1.5] <- '<img src="small_1.png">'
+  data$starsimage[data$rating >= 1.5 & data$rating < 2.0] <- '<img src="small_1_half.png">'
+  data$starsimage[data$rating >= 2.0 & data$rating < 2.5] <- '<img src="small_2.png">'
+  data$starsimage[data$rating >= 2.5 & data$rating < 3.0] <- '<img src="small_2_half.png">'
+  data$starsimage[data$rating >= 3.0 & data$rating < 3.5] <- '<img src="small_3.png">'
+  data$starsimage[data$rating >= 3.5 & data$rating < 4.0] <- '<img src="small_3_half.png">'
+  data$starsimage[data$rating >= 4.0 & data$rating < 4.5] <- '<img src="small_4.png">'
+  data$starsimage[data$rating >= 4.5 & data$rating < 4.95] <- '<img src="small_4_half.png">'
   data$starsimage[data$rating >= 4.95] <- '<img src="assets/small_5.png">'
   
   #popup content 
