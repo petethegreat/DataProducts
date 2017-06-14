@@ -3,14 +3,13 @@ library(leaflet)
 
 # makeMap
 # this function loads restaurant information from a csv file into a dataframe
-# The dataframe is then sliced by restaurant category
 # A leaflet map of Toronto is generated, and restaurant markers are added to it
 # each category is assigned a seperate group, so that they may be toggled later
 makeMap<-function()
 {
   # load the data 
   data<-read.csv('yelpData.csv')
-  # set up color pallette
+  # set up color palete
   # pal<-colorFactor('Set1',domain=levels(data$category))
   
   # map the rating to a Yelp stars image
@@ -27,7 +26,7 @@ makeMap<-function()
   data$starsimage[data$rating >= 4.5 & data$rating < 4.95] <- '<img src="assets/small_4_half.png">'
   data$starsimage[data$rating >= 4.95] <- '<img src="assets/small_5.png">'
   
-  #popup content
+  #popup content 
   data$content<-paste(
     sep='<br/>',
     paste(sep='',
@@ -43,43 +42,22 @@ makeMap<-function()
           )
     )
   
-  # subset data based on category
-  # will have a difference marker df per group
   data$category <- as.factor(data$category)
-  # subset data
+  #list of categories in data
   categories<-levels(data$category)
-  catlist<-lapply(categories,function(x) { data[data$category==x,]})
-  names(catlist)<-categories
+  
   # provider tiles. These will give a black and white (grayish) map
   # so coloured markers will stand out
   streetprovider<-providers$CartoDB.PositronNoLabels
   labelprovider<-providers$CartoDB.PositronOnlyLabels
-  # providers$Stamen.TonerLabels
   map<- leaflet() %>% setView(lng = -79.4, lat = 43.65, zoom = 13) %>%
     addProviderTiles(streetprovider,
                      options = providerTileOptions(opacity = 0.45)) %>%
     addProviderTiles(labelprovider)
-  # add all the markers/popups
-  # for (cat in categories)
-  # {
-  #   map<-map %>% addCircleMarkers(
-  #     data=data[data$category == cat,],
-  #     color=pal(cat),
-  #     stroke=FALSE,
-  #     fillOpacity=~rating/5.0,
-  #     # clusterOptions=markerClusterOptions(),
-  #     group=cat,
-  #     label=~name, #htmlEscape(name)
-  #     popup=~content,
-  #     popupOptions=popupOptions(minWidth=100)
-  #     )
-  # }
-  # add legend to map
-  # map<-map %>% addLegend("topright",pal=pal,values=levels(data$category))
-  # return a list containing the category names and the map
+ 
+  # return a list containing the map, category names, and data
   thelist<-list(map,categories,data)
   return(thelist)
-  
 }
 
 # server function
@@ -90,62 +68,46 @@ shinyServer(
     maplist<-makeMap()
     basemap<-maplist[[1]]
     catlist<-maplist[[2]]
-    data<-maplist[[3]]
-    pal<-colorFactor('Set1',domain=levels(data$category))
+    Data<-maplist[[3]]
+    # set up the category->colour mapping
+    pal<-colorFactor('Set1',domain=levels(Data$category))
     
+    # create an input checkboxgroup based on the categories in our data
     output$catGroup<-renderUI(
       checkboxGroupInput
       (
         'categoryList',
-        'cuisine categories',
+        'Cuisine Categories:',
         catlist, # list of categories/choices
-        c('burgers','indpak') # list of those initially selected (all)
+        catlist # list of those initially selected (all)
       )
     )
     
     # draw the map
-    map<-basemap
-    map<-map %>%addCircleMarkers(
-      data=data,
-      color=~pal(data$category),
+    # add circle markers to it (all cats to start)
+    map<-basemap %>%addCircleMarkers(
+      data=Data,
+      color=~pal(category),
       stroke=FALSE,
       fillOpacity=~rating/5.0,
-      # clusterOptions=markerClusterOptions(),
-      group=~data$category,
-      label=~name, #htmlEscape(name)
+      group=~category,
+      label=~name, 
       popup=~content,
       popupOptions=popupOptions(minWidth=100)
     )
-    
-    # for (cat in catlist)
-    # {
-    #   map<-map %>%addCircleMarkers(
-    #     data=data[data$category == cat,],
-    #     color=pal(cat),
-    #     stroke=FALSE,
-    #     fillOpacity=~rating/5.0,
-    #     # clusterOptions=markerClusterOptions(),
-    #     group=cat,
-    #     label=~name, #htmlEscape(name)
-    #     popup=~content,
-    #     popupOptions=popupOptions(minWidth=100)
-    #   )
-    # }
-    
+ 
     output$map<-renderLeaflet(map)
     
-    #output$catlist<-
-    
-    # Category Observers
-    # These are reflexive. They look for ui interaction
-    # The observer/proxy stuff means that the entire map is not redrawn when a checkbox is clicked
-    
-    
-    # burgers
+    # Observer
+    # This is reflexive. It looks for ui interaction
+    # This will show/hide marker groups (categories) if the checkbox input is changed
+    # (it depends on nothing else)
+    # The leafletproxy means that the entire map is not redrawn, only updated when a checkbox is clicked
+
     observe(
       {
         proxy <- leafletProxy("map")
-        proxy %>% clearShapes()
+        #proxy %>% clearShapes()
         for (groupname in catlist)
         {
           if (groupname %in% input$categoryList)
@@ -157,8 +119,47 @@ shinyServer(
             proxy %>% hideGroup(groupname)
           }
         }
-        
-      })
 
-  }
-)
+      })
+    
+    # Ratings Slider
+    # Change which markers are shown based on the slider values
+    # use observeEvent here, as we only need to invoke this method if slider values change,
+    # but it also depends on the currently selected categories (input$categoryList)
+    
+    observeEvent(input$ratingRange,
+      {
+        # filter data based on slider
+        minrat<-input$ratingRange[1]
+        maxrat<-input$ratingRange[2]
+        fd<- Data[(Data$rating >= minrat) & (Data$rating <= maxrat) ,]
+        # clear/update marker groups
+        proxy<-leafletProxy("map", data = fd) %>%
+          clearMarkers() %>%
+          addCircleMarkers(
+            color=~pal(category),
+            stroke=FALSE,
+            fillOpacity=~rating/5.0,
+            group=~category,
+            label=~name, #htmlEscape(name)
+            popup=~content,
+            popupOptions=popupOptions(minWidth=100)
+          )
+        # go through the categories. Show/Hide groups based on input
+        for (groupname in catlist)
+        {
+          if (groupname %in% input$categoryList)
+          {
+            proxy %>% showGroup(groupname)
+          }
+          else
+          {
+            proxy %>% hideGroup(groupname)
+          }
+        }
+      }
+    ) # end observeEvent
+
+    
+  } # end ShinyServer block
+) # end ShinyServer
