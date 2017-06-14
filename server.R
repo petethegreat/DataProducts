@@ -55,7 +55,7 @@ makeMap<-function()
   streetprovider<-providers$CartoDB.PositronNoLabels
   labelprovider<-providers$CartoDB.PositronOnlyLabels
   # providers$Stamen.TonerLabels
-  map<- leaflet() %>% setView(lng = -79.4, lat = 43.65, zoom = 12) %>%
+  map<- leaflet() %>% setView(lng = -79.4, lat = 43.65, zoom = 13) %>%
     addProviderTiles(streetprovider,
                      options = providerTileOptions(opacity = 0.45)) %>%
     addProviderTiles(labelprovider)
@@ -105,20 +105,32 @@ shinyServer(
     
     # draw the map
     map<-basemap
-    for (cat in catlist)
-    {
-      map<-map %>%addCircleMarkers(
-        data=data[data$category == cat,],
-        color=pal(cat),
-        stroke=FALSE,
-        fillOpacity=~rating/5.0,
-        # clusterOptions=markerClusterOptions(),
-        group=cat,
-        label=~name, #htmlEscape(name)
-        popup=~content,
-        popupOptions=popupOptions(minWidth=100)
-      )
-    }
+    map<-map %>%addCircleMarkers(
+      data=data,
+      color=~pal(data$category),
+      stroke=FALSE,
+      fillOpacity=~rating/5.0,
+      # clusterOptions=markerClusterOptions(),
+      group=~data$category,
+      label=~name, #htmlEscape(name)
+      popup=~content,
+      popupOptions=popupOptions(minWidth=100)
+    )
+    
+    # for (cat in catlist)
+    # {
+    #   map<-map %>%addCircleMarkers(
+    #     data=data[data$category == cat,],
+    #     color=pal(cat),
+    #     stroke=FALSE,
+    #     fillOpacity=~rating/5.0,
+    #     # clusterOptions=markerClusterOptions(),
+    #     group=cat,
+    #     label=~name, #htmlEscape(name)
+    #     popup=~content,
+    #     popupOptions=popupOptions(minWidth=100)
+    #   )
+    # }
     
     output$map<-renderLeaflet(map)
     
